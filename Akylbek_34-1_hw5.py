@@ -1,37 +1,31 @@
 from decouple import config
-from casino import Roulette
+
+from casino import Board, Croupier
 
 my_money = config('MY_MONEY', default=0, cast=int)
 print(f'You started with {my_money}')
-roulette = Roulette()
+
+board = Board()
 while True:
-    print('All right, gents, place your bets')
-    slot = int(input('Choose 1 slot from 1 to 30: '))
-    bet = int(input(f'Your bet: '))
+    Croupier.greeting()
 
-    if roulette.is_not_valid_slot(slot):
-        print(f'Choose write slot in range {roulette.slots}')
+    try:
+        slot = int(input('Choose 1 slot from 1 to 30: '))
+        bet = int(input(f'Your bet: '))
+
+        if Croupier.is_not_valid_bet(bet, my_money) or Croupier.is_not_valid_slot(slot, board.get_slots()):
+            continue
+
+        if Croupier.round_roulette(slot, board):
+            my_money += Croupier.on_success(bet)
+        else:
+            my_money -= Croupier.on_failure(bet)
+
+        Croupier.balance_inform(my_money)
+
+        if Croupier.exit_round():
+            break
+    except ValueError:
         continue
 
-    winning_number = roulette.round()
-    if winning_number > my_money:
-        print(f'Your balance is {my_money}')
-        continue
-
-    if slot == winning_number:
-        prize = bet ** 2
-        my_money += prize
-        print(f'Congratulation! You won: {prize}')
-    else:
-        my_money -= bet
-        print(f'Unfortunately, you lose yor bet')
-
-    print(f'Your balance is {my_money}')
-
-    try_again = input('Do you want try again? Default is y [y/n]: ')
-    if not try_again:
-        try_again = 'y'
-    if try_again != 'y':
-        break
-
-print(f'Your total balance is {my_money}')
+print(f"{config('YOUR_BALANCE')} {my_money}")
