@@ -1,31 +1,30 @@
 from decouple import config
-
 from casino import Board, Croupier
 
-my_money = config('MY_MONEY', default=0, cast=int)
-print(f'You started with {my_money}')
+balance = config('MY_MONEY', default=0, cast=int)
+print(f'You started with {balance}')
 
 board = Board()
 while True:
-    Croupier.greeting()
+    Croupier.greet()
 
     try:
         slot = int(input('Choose 1 slot from 1 to 30: '))
         bet = int(input(f'Your bet: '))
 
-        if Croupier.is_not_valid_bet(bet, my_money) or Croupier.is_not_valid_slot(slot, board.get_slots()):
+        if not Croupier.is_valid_bet(bet, balance) or not board.is_valid_slot(slot):
             continue
 
-        if Croupier.round_roulette(slot, board):
-            my_money += Croupier.on_success(bet)
+        if Croupier.is_bet_winning(slot, board):
+            balance += Croupier.handle_win(bet)
         else:
-            my_money -= Croupier.on_failure(bet)
+            balance -= Croupier.handle_loss(bet)
 
-        Croupier.balance_inform(my_money)
+        Croupier.inform_balance(balance)
 
-        if Croupier.exit_round():
+        if Croupier.should_exit():
             break
     except ValueError:
         continue
 
-print(f"{config('YOUR_BALANCE')} {my_money}")
+print(f"{config('YOUR_BALANCE')} {balance}")
