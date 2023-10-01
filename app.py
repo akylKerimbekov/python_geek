@@ -1,4 +1,7 @@
+import sqlite3
+
 from domain import Country, City, Employee
+from repository import DBManager
 from service import CountryService, CityService, EmployeeService
 from decouple import config
 
@@ -68,4 +71,23 @@ while True:
     city = city_service.find_by_id(city_id)
     employees_by_city = employee_service.find_by_city(city)
     print_list(employees_by_city)
+
+    sql = """
+    select emp.first_name, emp.last_name, cntr.title as country_name, ct.title as city_name, ct.area
+    from employee emp
+    inner join city ct on ct.id = emp.city_id
+    inner join country cntr on cntr.id = ct.country_id
+    where emp.city_id = ?  
+    """
+
+    # procedural style
+    try:
+        connection = sqlite3.connect(dbname)
+        cursor = connection.cursor()
+        cursor.execute(sql, [city_id])
+        result = cursor.fetchall()
+        for item in result:
+            print(f"{item[0]} {item[1]} {item[2]} {item[3]} {item[4]}")
+    except:
+        print(f"Error")
 
