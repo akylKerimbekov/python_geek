@@ -1,0 +1,1 @@
+delete from city where id = ?
