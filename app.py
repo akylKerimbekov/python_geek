@@ -72,22 +72,77 @@ while True:
     employees_by_city = employee_service.find_by_city(city)
     print_list(employees_by_city)
 
-    sql = """
-    select emp.first_name, emp.last_name, cntr.title as country_name, ct.title as city_name, ct.area
-    from employee emp
-    inner join city ct on ct.id = emp.city_id
-    inner join country cntr on cntr.id = ct.country_id
-    where emp.city_id = ?  
-    """
+# procedural style
+sql = """
+select emp.first_name, emp.last_name, cntr.title as country_name, ct.title as city_name, ct.area
+from employee emp
+inner join city ct on ct.id = emp.city_id
+inner join country cntr on cntr.id = ct.country_id
+where emp.city_id = ?  
+"""
+ddl_country = """
+create table if not exists country(
+    id integer primary key autoincrement,
+    title varchar(200) unique not null
+)"""
+ddl_city = """create table if not exists city(
+    id integer primary key autoincrement,
+    title varchar(200) unique not null,
+    area float default 0,
+    country_id integer
+);"""
+ddl_employee = """create table if not exists employee(
+    id integer primary key autoincrement,
+    first_name varchar(200) not null,
+    last_name varchar(200) not null,
+    city_id integer
+);
+"""
+populate_country = """
+insert into country(id, title)
+select 1 as id, 'Kazakhstan' as title union all
+select 2, 'Russia' union all
+select 3, 'Kyrgyzstan';
+"""
+populate_city = """
+insert into city
+select 1 as id, 'Almaty' as title, 1 as area, 1 as country_id union all
+select 2, 'Astana', 1, 1 union all
+select 3, 'Moscow', 1, 2 union all
+select 4, 'Saint-Petersburg', 1, 2 union all
+select 5, 'Bishkek', 1, 3 union all
+select 6, 'Osh', 1, 3;
+"""
+populate_employee = """
+insert into employee
+select 1 as id, 'Ivan' as first_name, 'Ivanov' as last_name, 4 as city_id  union all
+select 2, 'Petr', 'Petrov', 3 union all
+select 3, 'Asan', 'Asanov', 5 union all
+select 4, 'Uson', 'Usonov', 6 union all
+select 5, 'Daurenov', 'Daurenov', 1 union all
+select 6, 'Berik', 'Berikov', 2;
+"""
 
-    # procedural style
-    try:
-        connection = sqlite3.connect(dbname)
-        cursor = connection.cursor()
-        cursor.execute(sql, [city_id])
-        result = cursor.fetchall()
-        for item in result:
-            print(f"{item[0]} {item[1]} {item[2]} {item[3]} {item[4]}")
-    except:
-        print(f"Error")
+try:
+    connection = sqlite3.connect("old.db")
+    cursor = connection.cursor()
+    cursor.execute("drop table country")
+    cursor.execute("drop table city")
+    cursor.execute("drop table employee")
+    cursor.execute(ddl_country)
+    cursor.execute(ddl_city)
+    cursor.execute(ddl_employee)
+    cursor.execute(populate_country)
+    cursor.execute(populate_city)
+    cursor.execute(populate_employee)
+    connection.commit()
+
+    cursor.execute(sql, [6])
+    result = cursor.fetchall()
+    for item in result:
+        print(f"{item[0]} {item[1]} {item[2]} {item[3]} {item[4]}")
+        print()
+
+except:
+    print(f"Error")
 
